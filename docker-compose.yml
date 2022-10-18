@@ -8,7 +8,6 @@ services:
     <<: *restart_policy
     build:
       context: .
-    entrypoint: php /var/www/server.php
     env_file:
       - .env
     ports:
