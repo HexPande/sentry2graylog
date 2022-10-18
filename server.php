@@ -31,22 +31,20 @@ $server->on('request', function (Request $request, Response $response) use ($amq
             if ($body = $request->getContent()) {
                 $payload = json_decode($body, true);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    $timestamp = $request->header['sentry-hook-timestamp'] ?? time();
-
                     $prefix = '[alert] [sentry] ';
                     $title = Arr::get($payload, 'data.metric_alert.alert_rule.name');
                     $description = Arr::get($payload, 'data.description_text');
                     $action = Arr::get($payload, 'action');
 
                     $message = new Message();
-                    $message->setTimestamp($timestamp);
+                    $message->setTimestamp(time());
                     $message->setLevel(LogLevel::ALERT);
-                    $message->setHost(gethostname());
+                    $message->setHost('sentry.lptracker.ru');
                     $message->setShortMessage($prefix . $title . ' (' . $action . ')');
                     $message->setFullMessage($prefix . $title . ' ' . $description);
+                    $message->setAdditional('env_name', Arr::get($payload, 'data.metric_alert.alert_rule.environment'));
 
                     $extra = [
-                        'env_name' => Arr::get($payload, 'data.metric_alert.alert_rule.environment'),
                         'url' => Arr::get($payload, 'data.web_url'),
                         'status' => Arr::get($payload, 'action'),
                         'event' => 'sentry:alert',
