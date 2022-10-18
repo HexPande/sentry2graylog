@@ -41,7 +41,7 @@ $server->on('request', function (Request $request, Response $response) use ($amq
                     $message->setLevel(LogLevel::ALERT);
                     $message->setHost('sentry.lptracker.ru');
                     $message->setShortMessage($prefix . $title . ' (' . $action . ')');
-                    $message->setFullMessage($prefix . $title . ' ' . $description);
+                    $message->setFullMessage($prefix . $title . ': ' . $description);
                     $message->setAdditional('env_name', Arr::get($payload, 'data.metric_alert.alert_rule.environment'));
 
                     $extra = [
