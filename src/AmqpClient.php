@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App;
 
 use Exception;
@@ -30,6 +32,7 @@ final class AmqpClient
         $body = $this->encoder->encode($message);
 
         $this->getChannel()->basic_publish(new AMQPMessage($body, [
+            'message_id' => uniqid('sentry2graylog-', true),
             'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
             'content_type' => 'application/json',
         ]), $this->config['exchange']);

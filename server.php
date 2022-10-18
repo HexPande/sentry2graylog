@@ -1,4 +1,7 @@
+#!/usr/bin/env php
 <?php
+
+declare(strict_types=1);
 
 use App\AmqpClient;
 use Gelf\Message;
@@ -21,48 +24,45 @@ $amqp = new AmqpClient([
 
 $server = new Server('0.0.0.0', 80);
 
+$server->on('start', function () {
+    echo sprintf('Swoole http server is started at http://127.0.0.1:%s' . PHP_EOL, getenv('APP_PORT'));
+});
+
 $server->on('request', function (Request $request, Response $response) use ($amqp) {
-    echo $request->getData();
-
     $path = trim($request->server['request_uri'], '/');
+    $method = mb_strtoupper($request->server['request_method']);
 
-    if ($path === 'webhook') {
-        if ($request->header['sentry-hook-resource'] === 'metric_alert') {
-            if ($body = $request->getContent()) {
-                $payload = json_decode($body, true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $prefix = '[alert] [sentry] ';
-                    $title = Arr::get($payload, 'data.metric_alert.alert_rule.name');
-                    $description = Arr::get($payload, 'data.description_text');
-                    $action = Arr::get($payload, 'action');
+    if ($method === 'GET' && $path === 'webhook') {
+        $resource = $request->header['sentry-hook-resource'];
 
-                    $message = new Message();
-                    $message->setTimestamp(time());
-                    $message->setLevel(LogLevel::ALERT);
-                    $message->setHost('sentry.lptracker.ru');
-                    $message->setShortMessage($prefix . $title . ' (' . $action . ')');
-                    $message->setFullMessage($prefix . $title . ': ' . $description);
-                    $message->setAdditional('env_name', Arr::get($payload, 'data.metric_alert.alert_rule.environment'));
+        if ($resource === 'metric_alert') {
+            $payload = json_decode($request->getContent(), true, JSON_THROW_ON_ERROR);
 
-                    $extra = [
-                        'url' => Arr::get($payload, 'data.web_url'),
-                        'status' => Arr::get($payload, 'action'),
-                        'event' => 'sentry:alert',
-                    ];
-                    foreach ($extra as $key => $value) {
-                        $message->setAdditional('data_' . $key, $value);
-                    }
+            $prefix = '[alert] [sentry] ';
+            $title = Arr::get($payload, 'data.metric_alert.alert_rule.name');
+            $description = Arr::get($payload, 'data.description_text');
+            $action = Arr::get($payload, 'action');
 
-                    $amqp->push($message);
+            $message = new Message();
+            $message->setTimestamp(time());
+            $message->setLevel(LogLevel::ALERT);
+            $message->setHost('sentry.lptracker.ru');
+            $message->setShortMessage($prefix . $title . ' (' . $action . ')');
+            $message->setFullMessage($prefix . $title . ': ' . $description);
+            $message->setAdditional('env_name', Arr::get($payload, 'data.metric_alert.alert_rule.environment'));
+            $message->setAdditional('data_url', Arr::get($payload, 'data.web_url'));
+            $message->setAdditional('data_status', Arr::get($payload, 'action'));
+            $message->setAdditional('data_event', 'sentry:alert');
 
-                    $response->header('Content-Type', 'application/json');
-                    $response->end(json_encode(['result' => 'OK']));
-                    return;
-                }
-            }
+            $amqp->push($message);
         }
+
+        $response->header('Content-Type', 'application/json');
+        $response->end(json_encode(['result' => 'OK']));
+        return;
     }
 
+    $response->status(404);
     $response->end('');
 });
 
