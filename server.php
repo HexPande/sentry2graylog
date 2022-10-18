@@ -36,13 +36,14 @@ $server->on('request', function (Request $request, Response $response) use ($amq
                     $prefix = '[alert] [sentry] ';
                     $title = Arr::get($payload, 'data.metric_alert.alert_rule.name');
                     $description = Arr::get($payload, 'data.description_text');
+                    $action = Arr::get($payload, 'action');
 
                     $message = new Message();
-                    $message->setTimestamp(time());
+                    $message->setTimestamp($timestamp);
                     $message->setLevel(LogLevel::ALERT);
                     $message->setHost(gethostname());
-                    $message->setShortMessage($prefix . $title);
-                    $message->setFullMessage($prefix . $title . ': ' . $description);
+                    $message->setShortMessage($prefix . $title . ' (' . $action . ')');
+                    $message->setFullMessage($prefix . $title . ' ' . $description);
 
                     $extra = [
                         'env_name' => Arr::get($payload, 'data.metric_alert.alert_rule.environment'),
