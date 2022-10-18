@@ -21,6 +21,8 @@ $amqp = new AmqpClient([
 ]);
 
 $server->on('request', function (Request $request, Response $response) use ($amqp) {
+    echo $request->getData();
+
     $path = trim($request->server['request_uri'], '/');
 
     if ($path === 'webhook') {
