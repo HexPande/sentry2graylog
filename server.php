@@ -10,7 +10,6 @@ use Swoole\Http\Server;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$server = new Server('0.0.0.0', 80);
 $amqp = new AmqpClient([
     'host' => getenv('AMQP_HOST'),
     'port' => getenv('AMQP_PORT'),
@@ -19,6 +18,8 @@ $amqp = new AmqpClient([
     'vhost' => getenv('AMQP_VHOST'),
     'exchange' => getenv('AMQP_EXCHANGE'),
 ]);
+
+$server = new Server('0.0.0.0', 80);
 
 $server->on('request', function (Request $request, Response $response) use ($amqp) {
     echo $request->getData();
@@ -46,7 +47,8 @@ $server->on('request', function (Request $request, Response $response) use ($amq
                     $extra = [
                         'env_name' => Arr::get($payload, 'data.metric_alert.alert_rule.environment'),
                         'url' => Arr::get($payload, 'data.web_url'),
-                        'status' => Arr::get($payload, 'action')
+                        'status' => Arr::get($payload, 'action'),
+                        'event' => 'sentry:alert',
                     ];
                     foreach ($extra as $key => $value) {
                         $message->setAdditional('_data_' . $key, $value);

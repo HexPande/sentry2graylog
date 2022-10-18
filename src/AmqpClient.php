@@ -3,6 +3,7 @@
 namespace App;
 
 use Exception;
+use Gelf\Encoder\JsonEncoder;
 use Gelf\Message;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
@@ -13,10 +14,12 @@ final class AmqpClient
 {
     private array $config;
     private AbstractConnection $connection;
+    private JsonEncoder $encoder;
 
     public function __construct(array $config)
     {
         $this->config = $config;
+        $this->encoder = new JsonEncoder();
     }
 
     /**
@@ -24,12 +27,12 @@ final class AmqpClient
      */
     public function push(Message $message): void
     {
-        $msg = new AMQPMessage(json_encode($message->toArray()), [
+        $body = $this->encoder->encode($message);
+
+        $this->getChannel()->basic_publish(new AMQPMessage($body, [
             'delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT,
             'content_type' => 'application/json',
-        ]);
-
-        $this->getChannel()->basic_publish($msg, $this->config['exchange']);
+        ]), $this->config['exchange']);
     }
 
     /**
