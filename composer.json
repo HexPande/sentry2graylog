@@ -2,6 +2,7 @@
     "name": "hexpande/sentry2graylog",
     "require": {
         "graylog2/gelf-php": "^1.7",
+        "illuminate/support": "^9.35",
         "php-amqplib/php-amqplib": "^3.3"
     },
     "autoload": {

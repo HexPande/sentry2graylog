@@ -9,5 +9,7 @@ services:
     build:
       context: .
     entrypoint: php /var/www/server.php
+    env_file:
+      - .env
     ports:
-      - 8080:80
+      - "${APP_PORT}:80"
