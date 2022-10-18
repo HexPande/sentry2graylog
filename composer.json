@@ -1,0 +1,19 @@
+{
+    "name": "hexpande/sentry2graylog",
+    "require": {
+        "graylog2/gelf-php": "^1.7",
+        "php-amqplib/php-amqplib": "^3.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}

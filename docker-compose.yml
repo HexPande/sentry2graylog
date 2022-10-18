@@ -1,0 +1,13 @@
+version: '3'
+
+x-restart-policy: &restart_policy
+  restart: unless-stopped
+
+services:
+  app:
+    <<: *restart_policy
+    build:
+      context: .
+    entrypoint: php /var/www/server.php
+    ports:
+      - 8080:80
