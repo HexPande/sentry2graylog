@@ -38,9 +38,9 @@ $server->on('request', function (Request $request, Response $response) use ($amq
                     $description = Arr::get($payload, 'data.description_text');
 
                     $message = new Message();
-                    $message->setTimestamp($timestamp);
+                    $message->setTimestamp(time());
                     $message->setLevel(LogLevel::ALERT);
-                    $message->setHost('sentry.lptracker.ru');
+                    $message->setHost(gethostname());
                     $message->setShortMessage($prefix . $title);
                     $message->setFullMessage($prefix . $title . ': ' . $description);
 
@@ -51,7 +51,7 @@ $server->on('request', function (Request $request, Response $response) use ($amq
                         'event' => 'sentry:alert',
                     ];
                     foreach ($extra as $key => $value) {
-                        $message->setAdditional('_data_' . $key, $value);
+                        $message->setAdditional($key, $value);
                     }
 
                     $amqp->push($message);
