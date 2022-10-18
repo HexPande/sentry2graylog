@@ -51,7 +51,7 @@ $server->on('request', function (Request $request, Response $response) use ($amq
                         'event' => 'sentry:alert',
                     ];
                     foreach ($extra as $key => $value) {
-                        $message->setAdditional($key, $value);
+                        $message->setAdditional('data_' . $key, $value);
                     }
 
                     $amqp->push($message);
